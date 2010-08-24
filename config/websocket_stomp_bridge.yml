@@ -1,0 +1,17 @@
+stomp:
+  host: localhost
+  port: 61613
+  login: ""
+  passwd: ""
+  subscribe: /queue/dungeon_fu.public
+  publish: /queue/FOO.BAR
+
+websocket:
+  bind: 0.0.0.0
+  port: 10081
+
+flash_policy:
+  allow_access_from:
+    domain: *
+    ports: *
+

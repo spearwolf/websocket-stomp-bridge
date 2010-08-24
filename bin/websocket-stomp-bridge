@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# Created 2010/04/02 by wolfger@spearwolf.de
+require "rubygems"
+require "bundler/setup"
+require_relative "../lib/ws_stomp_bridge.rb"
+
+AppRoot = File.join(File.expand_path(File.dirname($0)), "..")
+
+WsStompBridge.configure(File.join(AppRoot, 'config', 'websocket_stomp_bridge.yml'))
+WsStompBridge.start
