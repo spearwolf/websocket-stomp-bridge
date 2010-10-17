@@ -4,17 +4,6 @@ module WsStompBridge
   module StompClient
     include EM::Protocols::Stomp
 
-    # class << self
-    # 
-    #   def publish(msg)
-    #     stomp.send(config.stomp.publish, msg) if stomp
-    #   end
-    #   
-    #   def config; WsStompBridge.config; end
-    #   def stomp; WsStompBridge.stomp; end
-    #   def logger; WsStompBridge.logger; end
-    # end
-
     # EM->Stomp callback
     def connection_completed
       connect :login => config.stomp.login, :passcode => config.stomp.passwd
@@ -22,13 +11,18 @@ module WsStompBridge
 
     # EM->Stomp callback
     def receive_msg(msg)
-      if msg.command == "CONNECTED"
+      case msg.command
+
+      when "CONNECTED"
         subscribe(queue)
         logger.info "Established subscription: stomp://#{WsStompBridge.config.stomp.host}:#{WsStompBridge.config.stomp.port}#{queue}"
+
+      when "MESSAGE"
+        # logger.debug "got message: #{msg.inspect}"
+        WsStompBridge::ChannelManager.channel(msg.header["destination"]).push(msg.body)
+      
       else
-        # TODO
-        WsStompBridge.channel.push(msg.body)
-        logger.debug "[#{queue}] #{msg.body}"
+        logger.warn "unknown message type: #{msg.inspect}"
       end
     end
 
@@ -45,10 +39,8 @@ module WsStompBridge
     def config; WsStompBridge.config; end
     def stomp; WsStompBridge.stomp; end
     def logger; WsStompBridge.logger; end
-    # def config; self.config; end
-    # def stomp; self.stomp; end
-    # def logger; self.logger; end
 
+    # XXX obsolete
     def queue
       @queue ||= config.stomp.subscribe
     end

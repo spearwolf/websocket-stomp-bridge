@@ -21,9 +21,11 @@ module WsStompBridge
           on_stomp_message(msg)
         end
       end
+      # TODO stomp >> subscribe
     end
 
     def unsubscribe(queue)
+      # TODO stomp >> unsubscribe
       if sid = @channels[queue]
         CM.channel(queue).unsubscribe(sid)
         @channels.delete(queue)
@@ -32,6 +34,7 @@ module WsStompBridge
 
     def unsubscribe_all
       @channels.each do |queue, sid|
+        # TODO stomp >> unsubscribe
         CM.channel(queue).unsubscribe(sid) if queue && sid
       end
       @channels = {}
