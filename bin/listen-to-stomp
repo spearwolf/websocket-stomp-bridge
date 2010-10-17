@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+# Created 2010/10/17 by wolfger@spearwolf.de
+require "rubygems"
+require "bundler/setup"
+require_relative "../lib/ws_stomp_bridge.rb"
+
+AppRoot = File.join(File.expand_path(File.dirname($0)), "..")
+$config = WsStompBridge::Configuration.load(File.join(AppRoot, 'config', 'websocket_stomp_bridge.yml'))
+$queue = ARGV[0] || $config.stomp.subscribe
+
+module StompIn
+  include EM::Protocols::Stomp
+
+  def connection_completed
+    connect :login => $config.stomp.login, :passcode => $config.stomp.passwd
+  end
+
+  def receive_msg msg
+    case msg.command
+    when "CONNECTED"
+      subscribe($queue)
+      puts "Established subscription: stomp://#{$config.stomp.host}:#{$config.stomp.port}#{$queue}"
+
+    when "MESSAGE"
+      puts msg.body
+
+    else
+      puts "{Message:command='#{msg.command}'}"
+    end
+  end
+end
+
+EM.run { EM.connect($config.stomp.host, $config.stomp.port, StompIn) }

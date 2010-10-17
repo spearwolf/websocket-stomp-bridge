@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+# Created 2010/10/17 by wolfger@spearwolf.de
+require "rubygems"
+require "bundler/setup"
+require_relative "../lib/ws_stomp_bridge.rb"
+require_relative "../web-socket-ruby/lib/web_socket.rb"
+
+# TODO rewrite and use EM->WebSockets
+
+AppRoot = File.join(File.expand_path(File.dirname($0)), "..")
+config = WsStompBridge::Configuration.load(File.join(AppRoot, 'config', 'websocket_stomp_bridge.yml'))
+
+host = config.websocket.bind
+port = config.websocket.port
+url = "ws://#{host}:#{port}/"
+
+puts "Connecting to #{url}"
+begin
+  client = WebSocket.new(url)
+  puts "OK Connected.\nType in something and press enter to send (blank line to exit) -->"
+
+  $stdin.each_line() do |line|
+    data = line.chomp
+    client.send(data)
+    printf("Sent: %p\n", data)
+  end
+
+  client.close
+  puts "Closed connection."
+
+rescue => e
+  puts "*** Error: #{e}"
+end
+
+puts "Bye."
