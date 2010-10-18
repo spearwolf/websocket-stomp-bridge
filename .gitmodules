@@ -1,3 +1,0 @@
-[submodule "web-socket-ruby"]
-	path = web-socket-ruby
-	url = http://github.com/gimite/web-socket-ruby.git
