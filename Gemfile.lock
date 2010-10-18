@@ -1,7 +1,10 @@
 GEM
   remote: http://rubygems.org/
   specs:
-    addressable (2.2.1)
+    addressable (2.2.2)
+    em-http-request (0.2.14)
+      addressable (>= 2.0.0)
+      eventmachine (>= 0.12.9)
     em-websocket (0.1.4)
       addressable (>= 2.1.1)
       eventmachine (>= 0.12.9)
@@ -11,4 +14,5 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  em-http-request (~> 0.2.14)
   em-websocket (~> 0.1.4)

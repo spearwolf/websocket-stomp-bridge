@@ -14,15 +14,14 @@ module WsStompBridge
       case msg.command
 
       when "CONNECTED"
-        subscribe(queue)
-        logger.info "Established subscription: stomp://#{WsStompBridge.config.stomp.host}:#{WsStompBridge.config.stomp.port}#{queue}"
+        logger.info "Established connection: stomp://#{WsStompBridge.config.stomp.host}:#{WsStompBridge.config.stomp.port}"
 
       when "MESSAGE"
-        # logger.debug "got message: #{msg.inspect}"
+        logger.debug "Received message: #{msg.inspect}"
         WsStompBridge::ChannelManager.channel(msg.header["destination"]).push(msg.body)
       
       else
-        logger.warn "unknown message type: #{msg.inspect}"
+        logger.warn "Unknown message type: #{msg.inspect}"
       end
     end
 
@@ -30,8 +29,28 @@ module WsStompBridge
       if stomp
         stomp.send(opts[:to], opts[:message])
       else
-        logger.error "coudn't publish message '#{opts[:message]}' to queue '#{opts[:to]}': stomp is nil"
+        logger.error "Couldn't publish message '#{opts[:message]}' to queue '#{opts[:to]}': stomp is nil"
       end
+    end
+    
+    def subscribe_to(queue)
+      if subscription[queue].nil?
+        subscription[queue] = 1
+        subscribe(queue)
+        logger.info "Subscribed to message queue '#{queue}'"
+      else
+        subscription[queue] += 1
+        if subscription[queue] == 1
+          subscribe(queue)
+          logger.info "Re-Subscribed to message queue '#{queue}'"
+        else
+          logger.info "Set subscription counter for message queue '#{queue}' to #{subscription[queue]}"
+        end
+      end
+    end
+    
+    def unsubscribe(queu)
+      logger.warn "TODO StompClient#unsubscribe"
     end
 
     private
@@ -40,9 +59,8 @@ module WsStompBridge
     def stomp; WsStompBridge.stomp; end
     def logger; WsStompBridge.logger; end
 
-    # XXX obsolete
-    def queue
-      @queue ||= config.stomp.subscribe
+    def subscription
+      @subscription ||= {}
     end
   end
 end

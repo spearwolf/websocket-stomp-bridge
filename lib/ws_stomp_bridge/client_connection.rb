@@ -21,35 +21,35 @@ module WsStompBridge
           on_stomp_message(msg)
         end
       end
-      # TODO stomp >> subscribe
+      use_stomp {|stomp| stomp.subscribe_to(queue) }
     end
 
     def unsubscribe(queue)
-      # TODO stomp >> unsubscribe
       if sid = @channels[queue]
         CM.channel(queue).unsubscribe(sid)
         @channels.delete(queue)
+        use_stomp {|stomp| stomp.unsubscribe(queue) }
       end
     end
 
     def unsubscribe_all
       @channels.each do |queue, sid|
-        # TODO stomp >> unsubscribe
-        CM.channel(queue).unsubscribe(sid) if queue && sid
+        if queue && sid
+          CM.channel(queue).unsubscribe(sid)
+          use_stomp {|stomp| stomp.unsubscribe(queue) }
+        end
       end
       @channels = {}
     end
 
     def publish(queue, msg)
-      if stomp
+      use_stomp do |stomp|
         if msg && msg != ""
           stomp.publish :to => queue, :message => msg
           logger.debug "published message to queue '#{queue}'"
         else
           logger.warn "ClientConnection#publish: dropped message: msg is blank"
         end
-      else
-        logger.warn "ClientConnection#publish: couldn't publish message: stomp is nil"
       end
     end
 
@@ -70,6 +70,17 @@ module WsStompBridge
     # def on_websocket_message(msg)
     # def on_websocket_disconnect
     # def on_stomp_message(msg)
+
+    private
+    
+    def use_stomp
+      if stomp
+        yield(stomp) if block_given?
+      else
+        logger.warn "ClientConnection: stomp is nil"
+      end
+    end
+
   end
 
   class ClientConnection < ClientConnectionBase

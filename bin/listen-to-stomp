@@ -4,6 +4,13 @@ require "rubygems"
 require "bundler/setup"
 require_relative "../lib/ws_stomp_bridge.rb"
 
+if ARGV[0] == '--help' or ARGV[0] == '-h'
+  puts <<-HELP
+#{$0} [ queue or topic ]
+  HELP
+  exit
+end
+
 AppRoot = File.join(File.expand_path(File.dirname($0)), "..")
 $config = WsStompBridge::Configuration.load(File.join(AppRoot, 'config', 'websocket_stomp_bridge.yml'))
 $queue = ARGV[0] || $config.stomp.subscribe
@@ -19,7 +26,7 @@ module StompIn
     case msg.command
     when "CONNECTED"
       subscribe($queue)
-      puts "Established subscription: stomp://#{$config.stomp.host}:#{$config.stomp.port}#{$queue}"
+      $stderr.puts "Established subscription: stomp://#{$config.stomp.host}:#{$config.stomp.port}#{$queue}"
 
     when "MESSAGE"
       puts msg.body

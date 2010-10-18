@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+# Created 2010/10/17 by wolfger@spearwolf.de
+require "rubygems"
+require "bundler/setup"
+require "em-http"
+require_relative "../lib/ws_stomp_bridge.rb"
+
+if ARGV[0] == '--help' or ARGV[0] == '-h'
+  puts <<-HELP
+#{$0} [ url ]
+  HELP
+  exit
+end
+
+AppRoot = File.join(File.expand_path(File.dirname($0)), "..")
+$config = WsStompBridge::Configuration.load(File.join(AppRoot, 'config', 'websocket_stomp_bridge.yml'))
+host = $config.websocket.bind
+host = "localhost" if host == "0.0.0.0"
+$url = ARGV[0] || "ws://#{host}:#{$config.websocket.port}/"
+
+module KBHandler
+  include EM::Protocols::LineText2
+
+  def receive_line(data)
+    $http.send(data)
+    puts %Q(Sent: "#{data}")
+  end
+end
+
+EventMachine.run {
+  $http = EventMachine::HttpRequest.new($url).get :timeout => 0
+
+  $http.disconnect {
+    puts 'Disconnect!'
+    exit 1
+  }
+  $http.callback { puts "OK Connected to #{$url}" }
+  $http.stream {|msg| puts %Q("Recieved: "#{msg}") }
+
+  EM.open_keyboard(KBHandler)
+}

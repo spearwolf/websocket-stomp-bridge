@@ -29,6 +29,7 @@ module WsStompBridge
     client.stomp = stomp
     clients[ws] = client
     logger.debug "new websocket connection: #{client}"
+    client.on_websocket_connect
   end
 
   def destroy_client_connection(ws)
@@ -44,16 +45,6 @@ module WsStompBridge
     @clients ||= {}
   end
 
-  # XXX obsolete
-  # def channel
-  #   @channel ||= EM::Channel.new
-  # end
-
-  # XXX obsolete
-  # def sid
-  #   @sid ||= {}
-  # end
-
   def logger
     @logger ||= Logger.new(STDOUT)
   end
@@ -64,34 +55,13 @@ module WsStompBridge
 
   def start
     EM.run {
-      # WebSocket server {{{
       EventMachine::WebSocket.start(:host => WSB.config.websocket.bind,
                                     :port => WSB.config.websocket.port,
                                     :debug => false) do |ws|
-
         ws.onopen { create_client_connection(ws) }
         ws.onclose { destroy_client_connection(ws) }
         ws.onmessage {|msg| client_connection(ws).on_websocket_message(msg) }
-
-        # ws.onopen do
-        #   sid[ws] = channel.subscribe {|msg| ws.send(msg) }
-        #   logger.debug "new websocket connection [ws/#{sid[ws]}]"
-        # end
-        # 
-        # ws.onclose do
-        #   if sid[ws]
-        #     channel.unsubscribe(sid[ws])
-        #     logger.debug "[ws/#{sid[ws]}] closed websocket connection"
-        #     sid[ws] = nil
-        #   end
-        # end
-        # 
-        # ws.onmessage do |msg|
-        #   StompClient.publish(msg)
-        #   logger.debug "[ws/#{sid[ws]}] received websocket message: #{msg}"
-        # end
       end
-      # }}}
 
       EM.connect(config.stomp.host, config.stomp.port, StompClient) do |stomp_client|
         WsStompBridge.stomp = stomp_client
