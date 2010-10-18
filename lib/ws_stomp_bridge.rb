@@ -28,13 +28,16 @@ module WsStompBridge
     client.websocket = ws
     client.stomp = stomp
     clients[ws] = client
-    logger.debug "new websocket connection: #{client}"
+    logger.debug "New websocket connection: #{client.id}"
     client.on_websocket_connect
   end
 
   def destroy_client_connection(ws)
-    # TODO
-    logger.warn "TODO WsStompBridge#destroy_client_connection"
+    if client = client_connection(ws)
+      client.on_websocket_disconnect
+      logger.debug "[#{client.id}] Disconnected!"
+      @clients.delete(ws)
+    end
   end
 
   def client_connection(ws)

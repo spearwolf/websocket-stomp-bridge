@@ -1,87 +1,6 @@
-require_relative "channel_manager"
+require_relative "client_connection_base"
 
 module WsStompBridge
-
-  class ClientConnectionBase
-
-    CM = WsStompBridge::ChannelManager
-
-    attr_accessor :websocket
-    attr_accessor :stomp
-
-    def initialize
-      @channels = {}
-    end
-
-    protected
-
-    def subscribe_to(queue)
-      unless @channels[queue]
-        @channels[queue] = CM.channel(queue).subscribe do |msg|
-          on_stomp_message(msg)
-        end
-      end
-      use_stomp {|stomp| stomp.subscribe_to(queue) }
-    end
-
-    def unsubscribe(queue)
-      if sid = @channels[queue]
-        CM.channel(queue).unsubscribe(sid)
-        @channels.delete(queue)
-        use_stomp {|stomp| stomp.unsubscribe(queue) }
-      end
-    end
-
-    def unsubscribe_all
-      @channels.each do |queue, sid|
-        if queue && sid
-          CM.channel(queue).unsubscribe(sid)
-          use_stomp {|stomp| stomp.unsubscribe(queue) }
-        end
-      end
-      @channels = {}
-    end
-
-    def publish(queue, msg)
-      use_stomp do |stomp|
-        if msg && msg != ""
-          stomp.publish :to => queue, :message => msg
-          logger.debug "published message to queue '#{queue}'"
-        else
-          logger.warn "ClientConnection#publish: dropped message: msg is blank"
-        end
-      end
-    end
-
-    def send_to_client(msg)
-      if websocket
-        websocket.send(msg)
-        logger.debug "sent message to websocket client"
-      else
-        logger.warn "ClientConnection#send_to_client: couldn't send message: websocket is nil"
-      end
-    end
-    
-    def logger
-      WsStompBridge.logger
-    end
-
-    # def on_websocket_connect
-    # def on_websocket_message(msg)
-    # def on_websocket_disconnect
-    # def on_stomp_message(msg)
-
-    private
-    
-    def use_stomp
-      if stomp
-        yield(stomp) if block_given?
-      else
-        logger.warn "ClientConnection: stomp is nil"
-      end
-    end
-
-  end
 
   class ClientConnection < ClientConnectionBase
 
@@ -94,7 +13,7 @@ module WsStompBridge
     end
 
     def on_websocket_disconnect
-      #unsubscribe '/queue/public'
+      # unsubscribe '/queue/public'
       unsubscribe_all
     end
 

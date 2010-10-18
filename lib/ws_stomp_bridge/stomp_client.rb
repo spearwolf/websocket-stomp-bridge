@@ -26,11 +26,11 @@ module WsStompBridge
     end
 
     def publish(opts)
-      if stomp
-        stomp.send(opts[:to], opts[:message])
-      else
-        logger.error "Couldn't publish message '#{opts[:message]}' to queue '#{opts[:to]}': stomp is nil"
-      end
+      send(opts[:to], opts[:message])
+    end
+    
+    def unsubscribe(queue)
+      send_frame "UNSUBSCRIBE", :destination => queue
     end
     
     def subscribe_to(queue)
@@ -44,13 +44,22 @@ module WsStompBridge
           subscribe(queue)
           logger.info "Re-Subscribed to message queue '#{queue}'"
         else
-          logger.info "Set subscription counter for message queue '#{queue}' to #{subscription[queue]}"
+          logger.debug "Set subscription counter for message queue '#{queue}' to #{subscription[queue]}"
         end
       end
     end
-    
-    def unsubscribe(queu)
-      logger.warn "TODO StompClient#unsubscribe"
+
+    def cancel_subscription(queue)
+      if subscription[queue].nil?
+        logger.warn "Oops .. couldn't cancel subscription to queue '#{queue}': there is no previous subscription!"
+      elsif subscription[queue] == 1
+        logger.info "Canceling subscription to message queue '#{queue}'"
+        unsubscribe(queue)
+        subscription[queue] = 0
+      else
+        subscription[queue] -= 1
+        logger.debug "Set subscription counter for message queue '#{queue}' to #{subscription[queue]}"
+      end
     end
 
     private
