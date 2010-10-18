@@ -3,8 +3,6 @@ stomp:
   port: 61613
   login: ""
   passwd: ""
-  subscribe: /queue/dungeon_fu.public
-  publish: /queue/FOO.BAR
 
 websocket:
   bind: 0.0.0.0
