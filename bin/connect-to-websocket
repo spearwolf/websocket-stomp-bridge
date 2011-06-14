@@ -35,7 +35,7 @@ EventMachine.run {
     exit 1
   }
   $http.callback { puts "OK Connected to #{$url}" }
-  $http.stream {|msg| puts %Q("Recieved: "#{msg}") }
+  $http.stream {|msg| puts %Q(Recieved: "#{msg}") }
 
   EM.open_keyboard(KBHandler)
 }
